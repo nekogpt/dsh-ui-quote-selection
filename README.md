@@ -1,103 +1,54 @@
-# dsh-ui-quote-selection
+# DSH 划词引用
 
-在 DSH Web 里像 Codex / Claude Code 一样「选中即引用」：选中聊天消息中的任意文本，一键放入输入框，发送时自动展开为完整原文。
+在 DSH Web 的聊天里选中一段文字，点击「引用到输入框」，就能针对这段话继续提问，不用来回复制粘贴。
 
-> 输入框里是紧凑的引用 chip，模型收到的是完整原文——显示简洁、信息无损。
+输入框只显示一小段引用预览，发送时模型仍会收到完整原文。
 
-## 特性
+## 安装
 
-- 🖱️ **选中即用**：消息内选中文本，选区上方浮现「引用到输入框」按钮；滚动时按钮跟随选区移动，选区滚出视野、按 Esc 或选区消失时才隐藏
-- 🧩 **官方管线**：基于 DSH 输入机的 reference 机制（`@` 触发源 + 占位符 + 提交序列化），不接管输入状态、不 hack 渲染
-- ✨ **输入框整洁**：引用以 chip 呈现（`❝ 前 20 字…`），左对齐显示开头，悬停看预览，Backspace 即删
-- 📦 **发送无损**：提交时 chip 物化为完整原文；序列化失败会**阻塞发送**而不是静默降级
-- 🌏 **语言自适应**：按钮文案随界面语言中英切换
-
-## 快速开始
-
-### 环境要求
-
-- DeepSeek Harness（`dsh`）**0.1.0-rc.6**，Web profile（`dsh web`）
-
-### 安装（一行命令）
+适用于 DeepSeek Harness Web。当前已在 `@deepseek-ai/dsh` `0.1.0-rc.6` 上测试。
 
 ```sh
 dsh plugin --profile web add dsh-ui-quote-selection
 ```
 
-也可以直接从 GitHub 安装：
+安装后重启 `dsh web`，再刷新浏览器。如果没有立即生效，可以按 Ctrl+Shift+R 强制刷新。
 
-```sh
-dsh plugin --profile web add git+https://github.com/nekogpt/dsh-ui-quote-selection.git
-```
+## 使用
 
-安装完成后重启 `dsh web`，再在浏览器里硬刷新（Ctrl+Shift+R）。插件通过官方 `dsh.bundle` 自动进入 Web profile，无需手改配置。
+1. 在用户或助手的消息中选中一段文字。
+2. 点击选区旁边的「引用到输入框」。
+3. 继续输入你想问的问题。
+4. 发送消息。
 
-### 卸载（一行命令）
+输入框中的引用标签只显示原文开头，鼠标移上去可以查看引用内容，按退格键即可删除。你也可以在一条消息里加入多段引用。
+
+## 它做了什么
+
+- 选中聊天文字后，一键放进输入框。
+- 输入框只显示简短预览，不会被长段原文占满。
+- 发送时自动带上完整原文，不会丢失内容。
+- 按钮文字会跟随 DSH 界面语言显示中文或英文。
+
+插件使用 DSH 自带的引用功能，不会修改 DSH 核心代码。
+
+## 卸载
 
 ```sh
 dsh plugin --profile web remove dsh-ui-quote-selection
 ```
 
-卸载后同样需要重启 `dsh web`。
+卸载后重启 `dsh web`。
 
-### 本地开发安装
+## 从源码安装
 
 ```sh
-cd /path/to/dsh-ui-quote-selection
+git clone https://github.com/nekogpt/dsh-ui-quote-selection.git
+cd dsh-ui-quote-selection
 dsh plugin --profile web add .
 ```
 
-## 使用
-
-1. 在任意消息（自己或助手）里拖选一段文字
-2. 点击选区上方的「引用到输入框」
-3. 输入框中出现 chip，光标自动落在其后，继续输入你的问题
-4. 发送——模型收到的消息里，chip 已展开为完整原文
-
-**为什么发送后直接展开、而不是折叠成引用块？** 与 Claude Code 一致：气泡所见即模型所得，零解析歧义。紧凑交给输入框（chip），诚实交给发送（全文）。
-
-## 工作原理
-
-```text
-选中文本
-  │ 点击悬浮按钮
-  ▼
-slash/input-insert-reference 事件（session 作用域）
-  │ 草稿中写入一个 U+FFFC 占位符，mint 一条 occurrence（source/ref/label）
-  ▼
-输入框 chip —— 官方 decorations 管线渲染，本插件注入一条左对齐 CSS（只命中引用 chip）
-  │ 用户发送
-  ▼
-sinkSerialized → 本插件 codec.serialize(ref) → 完整原文
-  ▼
-模型收到展开后的全文
-```
-
-要点：
-
-- 插件向 `@` 输入管线注册引用源 `quote-selection`（`ctx.inputTriggers.registerSource`），提交序列化走它的 `codec`
-- chip 的显示与删除都是输入机原生行为，本插件不持有任何输入状态
-- 草稿持久化 / 剪贴板走 `codec.clipboardText`（原文），刷新页面后未发送的引用安全降级为纯文本
-
-## 开发
-
-```text
-lib/index.js   node 半面：空插件（只为提供 Loader 入口）
-lib/client.js  浏览器半面：window.__ModuleLoader__.load 包装的手写 bundle
-```
-
-- bundle 内只 `require("react")`（平台种子），无其他运行时依赖
-- 改完 `lib/client.js` **无需重启 `dsh web`**：host 按磁盘 serve（`no-cache`），client-HMR 检测到 hash 变化会自动热更；未生效就硬刷新
-- 类型声明（`.d.ts`）暂缺，欢迎 PR
-
-## 兼容性
-
-- 在 `@deepseek-ai/dsh` **0.1.0-rc.6** 上开发并真机验证
-- 依赖的 DSH 内部契约（rc 阶段可能变化，升级 dsh 后请先复测「选中 → chip → 发送展开」全链路）：`/plugins` 客户端 bundle 服务、`ctx.inputTriggers` 引用管线、`slash/input-insert-reference` 会话事件、chip 的 decorations 渲染与 CSS 结构
-
-## 发布
-
-清单见 [PUBLISH.md](PUBLISH.md)。
+主要实现位于 `lib/client.js`。DSH 仍处于快速开发阶段；升级 DSH 后，如果引用功能出现异常，请提交 [Issue](https://github.com/nekogpt/dsh-ui-quote-selection/issues)。
 
 ## License
 
