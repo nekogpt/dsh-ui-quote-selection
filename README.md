@@ -20,41 +20,32 @@
 
 ### 安装（一行命令）
 
-```powershell
-# 已发布到 GitHub 后（包与脚本都从仓库取）：
-irm https://raw.githubusercontent.com/nekogpt/dsh-ui-quote-selection/main/install.ps1 | iex
-
-# 或本地源码目录：
-.\install.ps1 -Source .           # -Restart 可顺带重启 dsh web（项目根目录即包）
+```sh
+dsh plugin --profile web add dsh-ui-quote-selection
 ```
 
-脚本完成三件事：安装包（`pnpm add`，或 `-Source` 指定目录时直接复制）→ 幂等写入 patch row → 提示重启。
+也可以直接从 GitHub 安装：
+
+```sh
+dsh plugin --profile web add git+https://github.com/nekogpt/dsh-ui-quote-selection.git
+```
+
+安装完成后重启 `dsh web`，再在浏览器里硬刷新（Ctrl+Shift+R）。插件通过官方 `dsh.bundle` 自动进入 Web profile，无需手改配置。
 
 ### 卸载（一行命令）
 
-```powershell
-irm https://raw.githubusercontent.com/nekogpt/dsh-ui-quote-selection/main/uninstall.ps1 | iex
-# 连同包目录一起移除：uninstall.ps1 后加 -RemovePackage
+```sh
+dsh plugin --profile web remove dsh-ui-quote-selection
 ```
 
-> 重启不可省略：新插件的 row 只在 `dsh web` 启动时进入浏览器 boot graph。
+卸载后同样需要重启 `dsh web`。
 
-### 手动安装（备用）
+### 本地开发安装
 
-```powershell
-cd $env:DSH_HOME\profiles\web
-pnpm add dsh-ui-quote-selection        # 或: pnpm add github:nekogpt/dsh-ui-quote-selection
+```sh
+cd /path/to/dsh-ui-quote-selection
+dsh plugin --profile web add .
 ```
-
-编辑 `$env:DSH_HOME\profiles\web\cordis.patch.yml`，追加：
-
-```yaml
-- insert:
-    - id: ui-quote-selection
-      name: 'dsh-ui-quote-selection'
-```
-
-重启 `dsh web`，浏览器硬刷新（Ctrl+Shift+R）。卸载 = 删掉该 row，重启。
 
 ## 使用
 

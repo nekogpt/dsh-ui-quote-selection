@@ -4,7 +4,11 @@
   "version": "0.1.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nekogpt/dsh-ui-quote-selection"
+    "url": "git+https://github.com/nekogpt/dsh-ui-quote-selection.git"
+  },
+  "homepage": "https://github.com/nekogpt/dsh-ui-quote-selection#readme",
+  "bugs": {
+    "url": "https://github.com/nekogpt/dsh-ui-quote-selection/issues"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -15,9 +19,13 @@
   },
   "files": [
     "lib/index.js",
-    "lib/client.js"
+    "lib/client.js",
+    "cordis.patch.yml"
   ],
   "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "inject": [],
       "platform": "web",
@@ -35,6 +43,17 @@
   ],
   "peerDependencies": {
     "react": "^18.2.0"
+  },
+  "scripts": {
+    "check": "node --check lib/index.js && node --check lib/client.js",
+    "prepublishOnly": "npm run check"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "license": "MIT"
 }
