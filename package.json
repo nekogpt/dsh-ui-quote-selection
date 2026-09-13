@@ -1,7 +1,7 @@
 {
   "name": "dsh-ui-quote-selection",
   "description": "DSH web client plugin: select text in a chat message and quote it into the composer as an inline reference chip; the full text materializes on submit via the input-trigger reference codec.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nekogpt/dsh-ui-quote-selection.git"
